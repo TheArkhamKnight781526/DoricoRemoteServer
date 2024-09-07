@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using DoricoNet.Exceptions;
+using System.Reflection;
 
 public class HttpWorker : BackgroundService
 {
@@ -22,15 +23,24 @@ public class HttpWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private IDoricoRemote? _remoteInstance;
     private static readonly string DoricoRemoteDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dorico_remote/");
-    private static readonly string CacheFileName = ".token";
+    private static readonly string DoricoTokenFile = Path.Combine(DoricoRemoteDirectory, ".token");
+    private static readonly string DoricoLogFile = Path.Combine(DoricoRemoteDirectory, "log.txt");
+    private static readonly string DoricoPortFile = Path.Combine(DoricoRemoteDirectory, ".port");
+    private int port = 5000;
 
     public HttpWorker()
     {
+        // Change the port number if specified in the config file
+
+        if (File.Exists(DoricoPortFile)) {
+            port = int.Parse(File.ReadAllText(DoricoPortFile));
+        }        
+
         // Create an HttpListener and specify the URL it will listen on
         _httpListener = new HttpListener();
-        _httpListener.Prefixes.Add("http://localhost:5000/");
+        _httpListener.Prefixes.Add($"http://localhost:{port}/");
 
-        var serilog = new LoggerConfiguration().WriteTo.Console().WriteTo.File(Path.Combine(DoricoRemoteDirectory, "log.txt"), rollingInterval: RollingInterval.Day).CreateLogger();
+        var serilog = new LoggerConfiguration().WriteTo.Console().WriteTo.File(DoricoLogFile, rollingInterval: RollingInterval.Day).CreateLogger();
         Log.Logger = serilog;
 
         // Setup Dependency Injection for DoricoRemote
@@ -42,14 +52,13 @@ public class HttpWorker : BackgroundService
             .AddTransient<IDoricoRemote, DoricoRemote>();
 
         _serviceProvider = services.BuildServiceProvider();
-
     }
 
     // Start the background service
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _httpListener.Start();
-        Log.Information("HTTP Server started on http://localhost:5000/");
+        Log.Information($"HTTP Server started on http://localhost:{port}/");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -188,7 +197,7 @@ public class HttpWorker : BackgroundService
                 Log.Error($"Failed to connect to Dorico: {ex.InnerException}.");
                 if (retry) {
                     Log.Information("Clearing session token and retrying...");
-                    File.Delete(Path.Combine(DoricoRemoteDirectory, CacheFileName));
+                    File.Delete(Path.Combine(DoricoRemoteDirectory, ".token"));
                     return await ConnectToDorico(false);
                 }
 
@@ -214,12 +223,12 @@ public class HttpWorker : BackgroundService
 
     public static void SaveSessionToken(string token) {
         Directory.CreateDirectory(DoricoRemoteDirectory);
-        File.WriteAllText(Path.Combine(DoricoRemoteDirectory, CacheFileName), token);
+        File.WriteAllText(DoricoTokenFile, token);
     }
 
     public static String? GetSessionToken() {
-        if (File.Exists(Path.Combine(DoricoRemoteDirectory, CacheFileName))) {
-            return File.ReadAllText(Path.Combine(DoricoRemoteDirectory, CacheFileName));
+        if (File.Exists(DoricoTokenFile)) {
+            return File.ReadAllText(DoricoTokenFile);
         }
         return null;
     }
