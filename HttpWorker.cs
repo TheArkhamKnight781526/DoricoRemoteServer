@@ -161,7 +161,7 @@ public class HttpWorker : BackgroundService
         }
     }
 
-    private async Task<bool> ConnectToDorico()
+    private async Task<bool> ConnectToDorico(bool retry = true)
     {
         // Check if there's an existing Dorico connection
         if (_remoteInstance == null || !_remoteInstance.IsConnected)
@@ -185,7 +185,13 @@ public class HttpWorker : BackgroundService
             try {
                 await _remoteInstance.ConnectAsync("Stream Deck", connectionArguments);
             } catch (DoricoException ex) {
-                Log.Error($"Failed to connect to Dorico: {ex.InnerException}");
+                Log.Error($"Failed to connect to Dorico: {ex.InnerException}.");
+                if (retry) {
+                    Log.Information("Clearing session token and retrying...");
+                    File.Delete(Path.Combine(DoricoRemoteDirectory, CacheFileName));
+                    return await ConnectToDorico(false);
+                }
+
                 return false;
             }
             
