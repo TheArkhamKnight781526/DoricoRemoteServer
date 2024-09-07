@@ -21,7 +21,8 @@ public class HttpWorker : BackgroundService
     private readonly HttpListener _httpListener;
     private readonly IServiceProvider _serviceProvider;
     private IDoricoRemote? _remoteInstance;
-    private static readonly string CacheFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dorico_remote_token");
+    private static readonly string DoricoRemoteDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dorico_remote/");
+    private static readonly string CacheFileName = ".token";
 
     public HttpWorker()
     {
@@ -29,7 +30,7 @@ public class HttpWorker : BackgroundService
         _httpListener = new HttpListener();
         _httpListener.Prefixes.Add("http://localhost:5000/");
 
-        var serilog = new LoggerConfiguration().WriteTo.Console().WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day).CreateLogger();
+        var serilog = new LoggerConfiguration().WriteTo.Console().WriteTo.File(Path.Combine(DoricoRemoteDirectory, "log.txt"), rollingInterval: RollingInterval.Day).CreateLogger();
         Log.Logger = serilog;
 
         // Setup Dependency Injection for DoricoRemote
@@ -206,12 +207,13 @@ public class HttpWorker : BackgroundService
     }
 
     public static void SaveSessionToken(string token) {
-        File.WriteAllText(CacheFilePath, token);
+        Directory.CreateDirectory(DoricoRemoteDirectory);
+        File.WriteAllText(Path.Combine(DoricoRemoteDirectory, CacheFileName), token);
     }
 
     public static String? GetSessionToken() {
-        if (File.Exists(CacheFilePath)) {
-            return File.ReadAllText(CacheFilePath);
+        if (File.Exists(Path.Combine(DoricoRemoteDirectory, CacheFileName))) {
+            return File.ReadAllText(Path.Combine(DoricoRemoteDirectory, CacheFileName));
         }
         return null;
     }
