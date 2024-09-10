@@ -26,7 +26,7 @@ public class HttpWorker : BackgroundService
     private static readonly string DoricoTokenFile = Path.Combine(DoricoRemoteDirectory, ".token");
     private static readonly string DoricoLogFile = Path.Combine(DoricoRemoteDirectory, "log.txt");
     private static readonly string DoricoPortFile = Path.Combine(DoricoRemoteDirectory, ".port");
-    private int port = 5000;
+    private int port = 5608;
 
     public HttpWorker()
     {
@@ -86,8 +86,6 @@ public class HttpWorker : BackgroundService
 
         if (!string.IsNullOrEmpty(command.command))
         {
-            // Based on the command, send it to Dorico
-            Log.Information($"Received command: {command}");
 
             bool result = false;
 
@@ -156,7 +154,6 @@ public class HttpWorker : BackgroundService
             // Check the response (Dorico usually returns "kOK" for successful reception)
             if (response != null)
             {
-                Log.Information($"Command '{commandName}' sent successfully.");
                 return true;
             }
 
