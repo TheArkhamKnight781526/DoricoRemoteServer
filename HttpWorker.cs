@@ -32,9 +32,10 @@ public class HttpWorker : BackgroundService
     {
         // Change the port number if specified in the config file
 
-        if (File.Exists(DoricoPortFile)) {
+        if (File.Exists(DoricoPortFile))
+        {
             port = int.Parse(File.ReadAllText(DoricoPortFile));
-        }        
+        }
 
         // Create an HttpListener and specify the URL it will listen on
         _httpListener = new HttpListener();
@@ -89,10 +90,13 @@ public class HttpWorker : BackgroundService
 
             bool result = false;
 
-            if (command.command == "ToggleProperty") {
+            if (command.command == "ToggleProperty")
+            {
                 ToggleProperty toggleProperty = JsonSerializer.Deserialize<ToggleProperty>(body)!;
                 result = await ToggleProperty(toggleProperty.property, toggleProperty.property_value, toggleProperty.on_command, toggleProperty.off_command);
-            } else {
+            }
+            else
+            {
                 DoricoCommand sendCommand = JsonSerializer.Deserialize<DoricoCommand>(body)!;
                 result = await SendCommandToDorico(sendCommand.command, sendCommand.parameterNames ?? Array.Empty<string>(), sendCommand.parameterValues ?? Array.Empty<string>());
             }
@@ -112,23 +116,35 @@ public class HttpWorker : BackgroundService
             return false;
         }
 
-        PropertiesListResponse properties = await _remoteInstance!.GetPropertiesAsync();
-        Property matchedProperty = properties.Properties.FirstOrDefault(p => p.Name == property);
+        PropertiesListResponse? properties = await _remoteInstance!.GetPropertiesAsync();
+        if (properties != null)
+        {
+            Property? matchedProperty = properties.Properties.FirstOrDefault(p => p.Name == property);
 
-        if (matchedProperty == null) {
-            Log.Error($"Property '{property}' not found.");
-            return false;
-        } else {
-            bool isOn = matchedProperty.CurrentValue == property_value;
-
-            if (isOn) {
-                await SendCommandToDorico(off_command, Array.Empty<string>(), Array.Empty<string>());
-            } else {
-                await SendCommandToDorico(on_command, Array.Empty<string>(), Array.Empty<string>());
+            if (matchedProperty == null)
+            {
+                Log.Error($"Property '{property}' not found.");
+                return false;
             }
+            else
+            {
+                bool isOn = matchedProperty.CurrentValue == property_value;
 
-            return true;
+                if (isOn)
+                {
+                    await SendCommandToDorico(off_command, Array.Empty<string>(), Array.Empty<string>());
+                }
+                else
+                {
+                    await SendCommandToDorico(on_command, Array.Empty<string>(), Array.Empty<string>());
+                }
+
+                return true;
+            }
         }
+
+        Log.Error($"Failed to get properties.");
+        return false;
     }
 
     // This method sends the command to Dorico. If a Dorico instance is not connected, it creates one.
@@ -145,7 +161,8 @@ public class HttpWorker : BackgroundService
 
             // If connection exists, send the command
             CommandParameter[] commandParameters = new CommandParameter[parameterNames.Length];
-            for (int i = 0; i < parameterNames.Length; i++) {
+            for (int i = 0; i < parameterNames.Length; i++)
+            {
                 commandParameters[i] = new CommandParameter(parameterNames[i], parameterValues[i]);
             }
             Command command = new Command(commandName, commandParameters);
@@ -177,9 +194,12 @@ public class HttpWorker : BackgroundService
             bool ExistingToken = !string.IsNullOrEmpty(SessionToken);
             ConnectionArguments connectionArguments;
 
-            if (ExistingToken) {
+            if (ExistingToken)
+            {
                 connectionArguments = new ConnectionArguments(SessionToken);
-            } else {
+            }
+            else
+            {
                 connectionArguments = new ConnectionArguments();
             }
 
@@ -188,11 +208,15 @@ public class HttpWorker : BackgroundService
             _remoteInstance.Timeout = -1; // Set infinite timeout
 
             // Attempt to connect to Dorico
-            try {
+            try
+            {
                 await _remoteInstance.ConnectAsync("Stream Deck", connectionArguments);
-            } catch (DoricoException ex) {
+            }
+            catch (DoricoException ex)
+            {
                 Log.Error($"Failed to connect to Dorico: {ex.InnerException}.");
-                if (retry) {
+                if (retry)
+                {
                     Log.Information("Clearing session token and retrying...");
                     File.Delete(Path.Combine(DoricoRemoteDirectory, ".token"));
                     return await ConnectToDorico(false);
@@ -200,31 +224,37 @@ public class HttpWorker : BackgroundService
 
                 return false;
             }
-            
+
             if (!_remoteInstance.IsConnected)
             {
                 Log.Error("Failed to connect to Dorico.");
                 return false;
             }
 
-            if (!ExistingToken) {
+            if (!ExistingToken)
+            {
                 SaveSessionToken(_remoteInstance.SessionToken!);
             }
             Log.Information($"Connected to Dorico with code {_remoteInstance.SessionToken}");
 
             return true;
-        } else {
+        }
+        else
+        {
             return true;
         }
     }
 
-    public static void SaveSessionToken(string token) {
+    public static void SaveSessionToken(string token)
+    {
         Directory.CreateDirectory(DoricoRemoteDirectory);
         File.WriteAllText(DoricoTokenFile, token);
     }
 
-    public static String? GetSessionToken() {
-        if (File.Exists(DoricoTokenFile)) {
+    public static String? GetSessionToken()
+    {
+        if (File.Exists(DoricoTokenFile))
+        {
             return File.ReadAllText(DoricoTokenFile);
         }
         return null;
@@ -245,7 +275,8 @@ public class HttpWorker : BackgroundService
     }
 }
 
-internal class DoricoCommandName {
+internal class DoricoCommandName
+{
     public required string command { get; set; }
 }
 
@@ -255,7 +286,8 @@ internal class DoricoCommand : DoricoCommandName
     public string[]? parameterValues { get; set; }
 }
 
-internal class ToggleProperty : DoricoCommandName {
+internal class ToggleProperty : DoricoCommandName
+{
     public required string property { get; set; }
     public string? property_value { get; set; }
     public required string on_command { get; set; }
