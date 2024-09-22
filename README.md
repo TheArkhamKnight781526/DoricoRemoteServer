@@ -96,7 +96,7 @@ By default, the server runs on port 5608 - if you wish to change it, navigate to
 
 ### Running the Executable as a Service
 
-This program is designed to be run as a service (after all, it would be tedious to have to run it manually every time) - instructions for setting this up can be found below:
+This program is designed to be run as a service (after all, it would be tedious to have to run it manually every time) - instructions for setting this up can be found below: (Instructions for MacOS are coming soon, but anyone witha a fair knowledge of launchctl should be able to get it working.)
 
 #### Windows:
 
