@@ -87,8 +87,7 @@ public class HttpWorker : BackgroundService
 
         if (!string.IsNullOrEmpty(command.command))
         {
-
-            bool result = false;
+            bool result;
 
             if (command.command == "ToggleProperty")
             {
@@ -117,6 +116,7 @@ public class HttpWorker : BackgroundService
         }
 
         PropertiesListResponse? properties = await _remoteInstance!.GetPropertiesAsync();
+        Log.Information("Properties: " + properties);
         if (properties != null)
         {
             Property? matchedProperty = properties.Properties.FirstOrDefault(p => p.Name == property);
