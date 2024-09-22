@@ -31,9 +31,6 @@
   <p align="center">
     Server for Dorico Remote Stream Deck Plugin
     <br />
-    <a href="https://github.com/TheArkhamKnight781526/DoricoRemoteServer"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
     ·
     <a href="https://github.com/TheArkhamKnight781526/DoricoRemoteServer/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
@@ -52,7 +49,7 @@
       </ul>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
+      <a href="#compiling-the-program">Compiling</a>
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
@@ -69,9 +66,9 @@
 
 ![Dorico Remote StreamDeck Plugin][product-screenshot]
 
-<!-- GETTING STARTED -->
+<!-- COMPILING -->
 
-## Getting Started
+## Compiling the Program
 
 ### Prerequisites
 
