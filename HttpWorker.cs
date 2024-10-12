@@ -83,7 +83,16 @@ public class HttpWorker : BackgroundService
     private async Task<string> HandleRequest(HttpListenerRequest request)
     {
         var body = await new StreamReader(request.InputStream).ReadToEndAsync();
-        DoricoCommandName command = JsonSerializer.Deserialize<DoricoCommandName>(body)!;
+        DoricoCommandName command;
+        try
+        {
+            command = JsonSerializer.Deserialize<DoricoCommandName>(body)!;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to deserialize command: " + ex.Message);
+            return "Failed to deserialize command.";
+        }
 
         if (!string.IsNullOrEmpty(command.command))
         {
